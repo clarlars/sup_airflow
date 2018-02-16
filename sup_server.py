@@ -89,7 +89,7 @@ class SupMessage():
         """
         s = ""
         for b in self.bcd:
-            s += hex(b)[3:1:-1]
+            s += "{:02x}".format(b)[::-1]
         s = s.replace("f", "").replace("a", "*").replace("b", "#")
         self.phonenumber = s
 
