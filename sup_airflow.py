@@ -2,11 +2,12 @@ import argparse
 import threading
 import socket
 import time
+import requests
 
 from sup_server import SupServer
 
-DEFAULT_URL = "http://127.0.0.1:3000/routing_gateway/"
-
+DEFAULT_URL = "http://128.208.4.152:30000/ussd/app/"
+# DEFAULT_URL = "https://dev.uwpesa.com/ussd/app/"
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -19,6 +20,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     HOST = args.host
     PORT = args.port
+    
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, True)

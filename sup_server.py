@@ -52,6 +52,13 @@ class USSD_Session():
 class SupMessage():
     def __init__(self, data):
         """Takes in a bytearray containing a sup message and decodes it"""
+        while data[2] != 0xEE and len(data) > 6:
+            print(data[2])
+            print(str(data))
+            data = data[4:]
+        print(str(data))
+        if len(data) < 6:
+            print("ERROR!!!!!")
         self.raw_data = data
         b = list(data)
         b.pop(0) # pop off the null byte at the start
@@ -133,6 +140,9 @@ class SupServer(threading.Thread):
 
     def run(self):
         print("starting thread")
+        print("flushing sessions")
+        r = requests.get(self.url + "flush")
+        print("Flush status code: {}".format(r.status_code))
         sock = self.conn
         out = None
         while not self.end:
