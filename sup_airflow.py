@@ -6,7 +6,7 @@ import requests
 
 from sup_server import SupServer
 
-DEFAULT_URL = "http://128.208.4.152:30000/ussd/app/"
+DEFAULT_URL = "https://demo.uwpesa.com/ussd/app/"
 # DEFAULT_URL = "https://dev.uwpesa.com/ussd/app/"
 
 if __name__ == "__main__":

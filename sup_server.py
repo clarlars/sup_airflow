@@ -7,14 +7,20 @@ GSM0480_OP_CODE_PROCESS_USS_REQ = 0x3B
 GSM0480_OP_CODE_USS_REQUEST = 0x3C
 SESSIONS = {}
 
+ALT_URL = "http://127.0.0.1:9987"
+
 class USSD_Session():
-    def __init__(self, msg):
+    def __init__(self, msg, url):
         self.phonenumber = msg.phonenumber
         self.service_code = msg.text.strip("*#").split("*")[0]
         self.session_id = msg.invoke_id
         self.first = True
+        if self.service_code == "456":
+            self.url = ALT_URL
+        else:
+            self.url = url
 
-    def __process_part(self, text, url):
+    def __process_part(self, text):
         inp = text
         if self.first:
             text = ""
@@ -30,7 +36,7 @@ class USSD_Session():
             "input":inp,
             "serviceCode":self.service_code}
         print(data)
-        r = requests.post(url,
+        r = requests.post(self.url,
             data=data,
             headers=headers)
         if r.status_code != 200:
@@ -39,11 +45,11 @@ class USSD_Session():
         print("Got " + r.text)
         return r.text
 
-    def process(self, msg, url):
+    def process(self, msg):
         self.msg = msg
         parts = msg.text.strip("*#").split("*")
         for s in parts:
-            code, text = self.__process_part(s, url).split(" ", maxsplit=1)
+            code, text = self.__process_part(s).split(" ", maxsplit=1)
             if code == "END":
                 return msg.send_return_result(text)
         return msg.send_invoke(text)
@@ -76,11 +82,13 @@ class SupMessage():
         if b.pop(0) == 0x02:
             b.pop(0) # length
             self.opcode = b.pop(0)
-        assert b.pop(0) == 0x04, "Text tag not found"
-        self.text_length = b.pop(0)
-        self.text = ""
-        for i in range(self.text_length):
-            self.text += chr(b.pop(0))
+
+        if b[0] == 0x04:
+            assert b.pop(0) == 0x04, "Text tag not found"
+            self.text_length = b.pop(0)
+            self.text = ""
+            for i in range(self.text_length):
+                self.text += chr(b.pop(0))
 
         assert b.pop(0) == 0x80, "Extension not found"
         self.bcd_length = b.pop(0)
@@ -163,9 +171,9 @@ class SupServer(threading.Thread):
                 print("received: " + str(data))
                 msg = SupMessage(data)
                 if msg.message_type == GSM0480_OP_CODE_PROCESS_USS_REQ:
-                    SESSIONS[msg.invoke_id] = USSD_Session(msg)
+                    SESSIONS[msg.invoke_id] = USSD_Session(msg, self.url)
 
-                out, finished = SESSIONS[msg.invoke_id].process(msg, self.url)
+                out, finished = SESSIONS[msg.invoke_id].process(msg)
                 print("Sending: " + str(out))
                 print(finished)
                 
